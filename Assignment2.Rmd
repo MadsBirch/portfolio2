@@ -25,6 +25,21 @@ This is the data:
 - Kristian: 2 correct answers out of 2 questions (then he gets bored)
 - Josh: 160 correct answers out of 198 questions (Josh never gets bored)
 - Mikkel: 66 correct answers out of 132 questions
+```{r}
+# define dataset
+d = data.frame(
+  teacher = c("Riccardo","Kristian", "Josh", "Mikkel"),
+  questions = c(6,2,198,132),
+  correct = c(3,2,160,66)
+)
+```
+
+
+```{r}
+# libraries
+library(ggplot2)
+library(rethinking)
+```
 
 Questions:
 
@@ -33,20 +48,224 @@ Questions:
 - Then implement a quadratic approximation (hint check paragraph 2.4.2!).
 - N.B. for the rest of the exercise just keep using the grid approximation (we'll move to quadratic approximations in two classes)
 
+```{r}
+
+# ------ GRID APPROXIMATION ------
+
+t = "Riccardo"
+
+dens = 20
+
+# defining grid
+p_grid = seq(from = 0, to = 1, length.out = dens)
+
+# defining prior (three different)
+prior = rep(1,dens)
+#prior = ifelse(p_grid < 0.5, 0, 1)
+#prior = exp(-5*abs(p_grid - 0.5))
+
+# computing likelihood at each value in grid
+likelihood = dbinom(d$correct[d$teacher == t], d$questions[d$teacher == t], prob = p_grid)
+
+# compute product of likelihood and prior
+unstd.posterior = likelihood * prior
+
+# standardizing posterior, so it sums to 1
+posterior = unstd.posterior / sum(unstd.posterior)
+
+# plotting 
+g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+ggplot(g_d, aes(grid, posterior))+geom_point()
+
+# sampling from the poterior distribution to answer the question of what the probability is that Riccardo knows more than chance.
+sum(posterior[p_grid < 0.5 ])
+
+# ------ QUADRATIC APPROXIMATION ----
+
+teach.qa <- map(
+  alist(
+    l ~ dbinom(q,p) , # binomial likelihood
+    p ~ dunif(0,1) # uniform prior
+  ) ,
+  data=list(l=d$correct[d$teacher == t], q = d$questions[d$teacher == t]) )
+
+# display summary of quadratic approximation
+precis(teach.qa)
+
+
+```
+
+
 2. Estimate all the teachers' knowledge of CogSci. Who's best? Use grid approximation. Comment on the posteriors of Riccardo and Mikkel.
 2a. Produce plots of the prior, and posterior for each teacher.
 
+```{r}
+# qrid approximation loop for each teachers CogSci knowledge
+dens = 20
+
+for (t in d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = dens)
+  
+  # defining prior (three different)
+  prior = rep(1,dens)
+  
+  # computing likelihood at each value in grid
+  likelihood = dbinom(d$correct[d$teacher == t], d$questions[d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+  xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
+
+```
+
 3. Change the prior. Given your teachers have all CogSci jobs, you should start with a higher appreciation of their knowledge: the prior is a normal distribution with a mean of 0.8 and a standard deviation of 0.2. Do the results change (and if so how)?
 3a. Produce plots of the prior and posterior for each teacher.
+normal(0.8,0.2)
+
+```{r}
+# qrid approximation loop for each teachers CogSci knowledge
+dens = 20
+
+for (t in d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = dens)
+  
+  # defining prior (three different)
+  prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
+
+  # computing likelihood at each value in grid
+  likelihood = dbinom(d$correct[d$teacher == t], d$questions[d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+  xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
+
+```
+
 
 4. You go back to your teachers and collect more data (multiply the previous numbers by 100). Calculate their knowledge with both a uniform prior and a normal prior with a mean of 0.8 and a standard deviation of 0.2. Do you still see a difference between the results? Why?
+```{r}
+# collecting new data :-)
+questions = d$questions*100
+correct = d$correct*100
+
+new_d = data.frame(
+  teacher = d$teacher,
+  questions = questions,
+  correct = correct
+)
+
+# calculated knowledge of teachers using normal prior
+
+for (t in new_d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = dens)
+  
+  # defining prior (three different)
+  prior = rep(1, dens)
+
+  # computing likelihood at each value in grid
+  likelihood = dbinom(new_d$correct[new_d$teacher == t], new_d$questions[new_d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+  xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
+
+
+# calculated knowledge of teachers using prior with mean 0.8 and sd 0.2
+for (t in new_d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = dens)
+  
+  # defining prior (three different)
+  prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
+
+  # computing likelihood at each value in grid
+  likelihood = dbinom(new_d$correct[d$teacher == t], new_d$questions[d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+  xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
+
+
+```
+
 
 5. Imagine you're a skeptic and think your teachers do not know anything about CogSci, given the content of their classes. How would you operationalize that belief?
+
+```{r}
+# which prior should i define? (below is an example with prior distribution with mean 0.2 and sd 0.2)
+
+for (t in new_d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = dens)
+  
+  # defining prior (three different)
+  prior = dnorm(p_grid, mean = 0.2, sd = 0.2)
+
+  # computing likelihood at each value in grid
+  likelihood = dbinom(new_d$correct[d$teacher == t], new_d$questions[d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+  xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
+
+
+
+```
+
 
 6. Optional question: Can you estimate the difference between Riccardo's estimated knowledge and that of each of the other teachers? Would you deem it credible (that is, would you believe that it is actually different)?
 
 7. Bonus knowledge: all the stuff we have done can be implemented in a lme4-like fashion using the brms package. Here is an example.
 ```{r}
+install.packages("brms")
 library(brms)
 d <- data.frame(
   Correct=c(3,2,160,66),
