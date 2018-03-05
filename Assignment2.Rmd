@@ -224,7 +224,6 @@ for (t in new_d$teacher){
   plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
 geom_line(aes(grid,prior/dens),color='red')+ xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
   print(plot)
-  print(t)
 }
 
 
