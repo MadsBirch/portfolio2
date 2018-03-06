@@ -9,6 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+```{r setup, include=FALSE}
+# libraries
+library(ggplot2)
+library(rethinking)
+```
+
 ## In this assignment we learn how to assess rates from a binomial distribution, using the case of assessing your teachers' knowledge of CogSci.
 
 ### Second part: Focusing on predictions
@@ -16,10 +23,10 @@ knitr::opts_chunk$set(echo = TRUE)
 Last year you assessed the teachers (darned time runs quick!). Now you want to re-test them and assess whether your models are producing reliable predictions. In Methods 3 we learned how to do machine-learning style assessment of predictions (e.g. rmse on testing datasets). Bayesian stats makes things a bit more complicated. So we'll try out how that works. N.B. You can choose which prior to use for the analysis of last year's data.
 
 Questions to be answered (but see guidance below):
-1- Write a paragraph discussing how assessment of prediction performance is different in Bayesian vs. frequentist models
-
-In Bayesian models you don not have point estimates, you get a range of values with different levels of uncertainty.
-Reflect about what you learned
+  1- Write a paragraph discussing how assessment of prediction performance is different in Bayesian vs. frequentist models
+  
+  In Bayesian models you don not have point estimates, you get a range of values with different levels of uncertainty.
+  Reflect about what you learned
 
 2- Provide at least one plot and one written line discussing prediction errors for each of the teachers.
 
@@ -45,46 +52,74 @@ Guidance Tips
 ```{r}
 
 # next years data
-next_data = data.frame(
+next_d= data.frame(
   teacher = c("Riccardo","Kristian", "Josh", "Mikkel"),
   questions = c(10,12,172,65),
   correct = c(9,8,148,34)
 )
 
-# OLD posterior/model
 
+# way 2 to answer question
 # defining grid
 p_grid = seq(from = 0, to = 1, length.out = dens)
   
 # defining prior (three different)
-prior = dnorm(p_grid, mean = 0.2, sd = 0.2)
-
-# computing likelihood at each value in grid
-likelihood = dbinom(new_d$correct[new_d$teacher == t], new_d$questions[d$teacher == t], prob = p_grid)
-
-# compute product of likelihood and prior
-unstd.posterior = likelihood * prior
-
-# standardizing posterior, so it sums to 1
-posterior = unstd.posterior / sum(unstd.posterior)
-
-# plotting 
-g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
 
 
-# sampling
+# function for getting predictive distribution
+predictive_distribution = function(teacher, size){
+  # computing likelihood at each value in grid
+  likelihood = dbinom(new_d$correct[new_d$teacher == teacher], new_d$questions[d$teacher == teacher], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # sampling 
+  samples = sample(p_grid, prob = posterior, size = 10000, replace = T)
+  
+  w = rbinom( 1e4 , size , prob = samples )
+  
+  simplehist(w)
+} 
 
-samples = sample(p_grid, prob = posterior, size = 10000, replace = T)
 
-plot(samples)
-dens(samples)
+predictive_distribution(teacher = "Riccardo", size = 10)
 
-c = rbinom(10000 , size = 10 , prob=samples)
+## way 1 to answer question
+# new data set with this years data
+full_d = new_d[,2:3] + next_d[,2:3]
+full_d$teacher = next_d$teacher
 
-simplehist(c)
+g_d = data.frame()
 
+# calculating new posterior with the added data
+# calculated knowledge of teachers using prior with mean 0.8 and sd 0.2
+for (t in full_d$teacher){
+  # defining grid
+  p_grid = seq(from = 0, to = 1, length.out = 1000)
+  
+  # defining prior (three different)
+  prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
 
-
+  # computing likelihood at each value in grid
+  likelihood = dbinom(full_d$correct[full_d$teacher == t], full_d$questions[full_d$teacher == t], prob = p_grid)
+  
+  # compute product of likelihood and prior
+  unstd.posterior = likelihood * prior
+  
+  # standardizing posterior, so it sums to 1
+  posterior = unstd.posterior / sum(unstd.posterior)
+  
+  # plotting 
+  g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
+  plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
+geom_line(aes(grid,prior/dens),color='red')+ xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+  print(plot)
+}
 
 
 ```

@@ -205,7 +205,7 @@ g_d = data.frame()
 # calculated knowledge of teachers using prior with mean 0.8 and sd 0.2
 for (t in new_d$teacher){
   # defining grid
-  p_grid = seq(from = 0, to = 1, length.out = dens)
+  p_grid = seq(from = 0, to = 1, length.out = 1000)
   
   # defining prior (three different)
   prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
