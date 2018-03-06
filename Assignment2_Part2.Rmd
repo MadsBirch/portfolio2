@@ -122,7 +122,6 @@ geom_line(aes(grid,prior/dens),color='red')+ xlab(paste("Knowledge of",t))+ ylab
 }
 
 
-```
 
 
 ### Depending on time: Questions from the handbook

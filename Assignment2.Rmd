@@ -54,7 +54,7 @@ Questions:
 
 t = "Riccardo"
 
-dens = 20
+dens = 1000
 
 # defining grid
 p_grid = seq(from = 0, to = 1, length.out = dens)
@@ -101,7 +101,6 @@ precis(teach.qa)
 
 ```{r}
 # qrid approximation loop for each teachers CogSci knowledge
-dens = 20
 
 for (t in d$teacher){
   # defining grid
@@ -135,7 +134,7 @@ normal(0.8,0.2)
 
 ```{r}
 # qrid approximation loop for each teachers CogSci knowledge
-dens = 20
+
 
 for (t in d$teacher){
   # defining grid
@@ -205,7 +204,7 @@ g_d = data.frame()
 # calculated knowledge of teachers using prior with mean 0.8 and sd 0.2
 for (t in new_d$teacher){
   # defining grid
-  p_grid = seq(from = 0, to = 1, length.out = 1000)
+  p_grid = seq(from = 0, to = 1, length.out = dens)
   
   # defining prior (three different)
   prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
@@ -242,7 +241,7 @@ for (t in new_d$teacher){
   p_grid = seq(from = 0, to = 1, length.out = dens)
   
   # defining prior (three different)
-  prior = dnorm(p_grid, mean = 0.2, sd = 0.2)
+  prior = dnorm(p_grid, mean = 0.5, sd = 0.2)
 
   # computing likelihood at each value in grid
   likelihood = dbinom(new_d$correct[d$teacher == t], new_d$questions[d$teacher == t], prob = p_grid)
