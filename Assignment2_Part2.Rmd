@@ -61,7 +61,7 @@ next_d= data.frame(
 
 # way 2 to answer question
 # defining grid
-p_grid = seq(from = 0, to = 1, length.out = dens)
+p_grid = seq(from = 0, to = 1, length.out = 1000)
   
 # defining prior (three different)
 prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
@@ -87,7 +87,7 @@ predictive_distribution = function(teacher, size){
 } 
 
 
-predictive_distribution(teacher = "Riccardo", size = 10)
+predictive_distribution(teacher = "Josh", size = 148)
 
 ## way 1 to answer question
 # new data set with this years data
@@ -102,8 +102,9 @@ for (t in full_d$teacher){
   # defining grid
   p_grid = seq(from = 0, to = 1, length.out = 1000)
   
-  # defining prior (three different)
+  # defining prior
   prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
+  prior = prior / sum(prior)
 
   # computing likelihood at each value in grid
   likelihood = dbinom(full_d$correct[full_d$teacher == t], full_d$questions[full_d$teacher == t], prob = p_grid)
@@ -117,9 +118,12 @@ for (t in full_d$teacher){
   # plotting 
   g_d = data.frame(grid = p_grid, posterior = posterior, prior = prior, likelihood = likelihood)
   plot = ggplot(g_d, aes(grid, posterior))+geom_point()+geom_line()+theme_classic()+
-geom_line(aes(grid,prior/dens),color='red')+ xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
+geom_line(aes(grid,prior),color='red')+ xlab(paste("Knowledge of",t))+ ylab("posterior probability") 
   print(plot)
 }
+
+
+
 
 
 ```

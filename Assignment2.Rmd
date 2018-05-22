@@ -104,7 +104,7 @@ precis(teach.qa)
 
 for (t in d$teacher){
   # defining grid
-  p_grid = seq(from = 0, to = 1, length.out = dens)
+  p_grid = seq(from = 0, to = 1, length.out = 1000)
   
   # defining prior (three different)
   prior = rep(1,dens)
@@ -138,7 +138,7 @@ normal(0.8,0.2)
 
 for (t in d$teacher){
   # defining grid
-  p_grid = seq(from = 0, to = 1, length.out = dens)
+  p_grid = seq(from = 0, to = 1, length.out = 1000)
   
   # defining prior (three different)
   prior = dnorm(p_grid, mean = 0.8, sd = 0.2)
